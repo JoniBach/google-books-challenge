@@ -1,12 +1,12 @@
 <script lang="ts">
 	/**
-	 * @module DataTable
+	 * @module Table
 	 * @description
 	 * A responsive data table component built with Svelte and TypeScript.
 	 * It supports sorting, pagination, searching, and nested data formatting.
 	 *
 	 * @example
-	 * <DataTable
+	 * <Table
 	 *   columns={columns}
 	 *   data={data}
 	 *   totalRows={totalRows}
