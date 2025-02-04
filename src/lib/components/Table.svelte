@@ -2,7 +2,7 @@
 	/**
 	 * @module Table
 	 * @description
-	 * A responsive data table component built with Svelte and TypeScript.
+	 * A responsive data table component built with Svelte 5 and TypeScript.
 	 * It supports sorting, pagination, searching, and nested data formatting.
 	 *
 	 * @example
@@ -15,86 +15,55 @@
 	 *   sortBy={sortBy}
 	 *   sortDirection={sortDirection}
 	 *   searchQuery={searchQuery}
-	 *   onPageChange={handlePageChange}
-	 *   onSortChange={handleSortChange}
-	 *   onSearchChange={handleSearchChange}
-	 *   onRowClick={handleRowClick}
+	 *   pageChange={handlePageChange}
+	 *   sortChange={handleSortChange}
+	 *   searchChange={handleSearchChange}
+	 *   rowClick={handleRowClick}
 	 * />
 	 */
 
+	// Import a date formatter from date-fns.
 	import { format } from 'date-fns';
 	import type { Column, Row } from '$lib/types';
 
 	/**
-	 * Array of column definitions.
-	 * Each column defines how data should be displayed.
-	 * @type {Column[]}
+	 * Props type for the Table component.
 	 */
-	export let columns: Column[] = [];
+	type TableProps = {
+		columns: Column[];
+		data: Row[];
+		totalRows: number;
+		currentPage: number;
+		rowsPerPage: number;
+		sortBy: string;
+		sortDirection: 'asc' | 'desc';
+		/** The search query; this prop is bindable. */
+		searchQuery: string;
+		/** Callback triggered when the page changes. */
+		pageChange: (page: number) => void;
+		/** Callback triggered when the sort criteria changes. */
+		sortChange: (sortBy: string, direction: 'asc' | 'desc') => void;
+		/** Callback triggered when the search query changes. */
+		searchChange: (query: string) => void;
+		/** Callback triggered when a row is clicked. */
+		rowClick: (row: Row) => void;
+	};
 
-	/**
-	 * Array of data rows to display in the table.
-	 * @type {Row[]}
-	 */
-	export let data: Row[] = [];
-
-	/**
-	 * Total number of rows available (used for pagination).
-	 * @type {number}
-	 */
-	export let totalRows: number = 0;
-
-	/**
-	 * Current page number.
-	 * @type {number}
-	 */
-	export let currentPage: number = 1;
-
-	/**
-	 * Number of rows to display per page.
-	 * @type {number}
-	 */
-	export let rowsPerPage: number = 10;
-
-	/**
-	 * The column ID currently used for sorting.
-	 * @type {string}
-	 */
-	export let sortBy: string = '';
-
-	/**
-	 * The current sort direction ('asc' or 'desc').
-	 * @type {'asc' | 'desc'}
-	 */
-	export let sortDirection: 'asc' | 'desc' = 'asc';
-
-	/**
-	 * The search query string used to filter rows.
-	 * @type {string}
-	 */
-	export let searchQuery: string = '';
-
-	/**
-	 * Callback function triggered when the page changes.
-	 * @callback onPageChange
-	 * @param {number} page - The new page number.
-	 */
-	export let onPageChange: (page: number) => void = () => {};
-
-	/**
-	 * Callback function triggered when the sort criteria changes.
-	 * @callback onSortChange
-	 * @param {string} sortBy - The ID of the column to sort by.
-	 * @param {'asc' | 'desc'} direction - The new sort direction.
-	 */
-	export let onSortChange: (sortBy: string, direction: 'asc' | 'desc') => void = () => {};
-
-	/**
-	 * Callback function triggered when a row is clicked.
-	 * @callback onRowClick
-	 * @param {Row} row - The data row that was clicked.
-	 */
-	export let onRowClick: (row: Row) => void = () => {};
+	// Destructure our props via $props(), and make searchQuery bindable.
+	let {
+		columns,
+		data,
+		totalRows,
+		currentPage,
+		rowsPerPage,
+		sortBy,
+		sortDirection,
+		searchQuery = $bindable(''),
+		pageChange,
+		sortChange,
+		searchChange,
+		rowClick
+	}: TableProps = $props();
 
 	/**
 	 * Retrieves a nested value from an object using a dot-separated path.
@@ -106,13 +75,6 @@
 	function getNestedValue(row: Row, path: string): any {
 		return path.split('.').reduce((acc, part) => acc && acc[part], row);
 	}
-
-	/**
-	 * Callback function triggered when the search query changes.
-	 * @callback onSearchChange
-	 * @param {string} query - The new search query string.
-	 */
-	export let onSearchChange: (query: string) => void = () => {};
 
 	/**
 	 * Formats a cell value based on its type.
@@ -136,27 +98,26 @@
 	}
 
 	/**
-	 * Handles the sorting event when a column header is clicked.
-	 * If the column is sortable, this toggles the sort direction and
-	 * calls the onSortChange callback with the new criteria.
+	 * Handles sorting when a column header is clicked.
+	 * If the column is sortable, toggles the sort direction and calls the sortChange callback.
 	 *
 	 * @param {Column} column - The column that was clicked.
 	 */
 	function handleSort(column: Column): void {
 		if (!column.sortable) return;
 		const newDirection = column.id === sortBy && sortDirection === 'asc' ? 'desc' : 'asc';
-		onSortChange(column.id, newDirection);
+		sortChange(column.id, newDirection);
 	}
 
 	/**
 	 * Handles the search input event.
-	 * Calls the onSearchChange callback with the new search query.
+	 * Calls the searchChange callback with the new search query.
 	 *
 	 * @param {Event} event - The input event object.
 	 */
 	function handleSearch(event: Event): void {
 		const input = event.target as HTMLInputElement;
-		onSearchChange(input.value);
+		searchChange(input.value);
 	}
 </script>
 
@@ -165,7 +126,7 @@
 		type="text"
 		class="search-input"
 		placeholder="Search..."
-		on:input={handleSearch}
+		oninput={handleSearch}
 		value={searchQuery}
 	/>
 </div>
@@ -174,7 +135,7 @@
 	<thead class="data-table__head">
 		<tr class="data-table__row data-table__row--head">
 			{#each columns as column}
-				<th class="data-table__header" on:click={() => handleSort(column)}>
+				<th class="data-table__header" onclick={() => handleSort(column)}>
 					{column.label}
 					{#if column.sortable}
 						<span class="data-table__sort-indicator">
@@ -189,7 +150,7 @@
 	</thead>
 	<tbody class="data-table__body">
 		{#each data as row}
-			<tr class="data-table__row" on:click={() => onRowClick(row)}>
+			<tr class="data-table__row" onclick={() => rowClick(row)}>
 				{#each columns as column}
 					<td class="data-table__cell" data-label={column.label}>
 						{#if column.type === 'link'}
@@ -220,7 +181,7 @@
 <div class="pagination-controls">
 	<button
 		class="pagination-controls__button"
-		on:click={() => onPageChange(currentPage - 1)}
+		onclick={() => pageChange(currentPage - 1)}
 		disabled={currentPage === 1}
 	>
 		Previous
@@ -230,7 +191,7 @@
 	</span>
 	<button
 		class="pagination-controls__button"
-		on:click={() => onPageChange(currentPage + 1)}
+		onclick={() => pageChange(currentPage + 1)}
 		disabled={currentPage >= Math.ceil(totalRows / rowsPerPage)}
 	>
 		Next
@@ -265,9 +226,6 @@
 		padding: 8px;
 		text-align: left;
 		border: 1px solid #ddd;
-		cursor: pointer;
-	}
-	.data-table__header {
 		cursor: pointer;
 	}
 	.data-table__sort-indicator {

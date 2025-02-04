@@ -4,6 +4,7 @@
 	import Table from '$lib/components/Table.svelte';
 	import type { Column } from '$lib/types';
 
+	// Extract props using $props.
 	const { data } = $props<{ books: BooksResponse }>();
 
 	const columns: Column[] = [
@@ -32,8 +33,8 @@
 	let searchQuery = $state('cats');
 
 	async function handleFetchData() {
-		books = data?.books?.items;
-		totalRows = data?.books?.totalItems / 10 || 0;
+		books = data?.books?.items || [];
+		totalRows = data?.books?.totalItems || 0;
 	}
 
 	function handlePageChange(page: number) {
@@ -55,7 +56,6 @@
 
 	function handleRowClick(row: any) {
 		console.log('Row clicked:', row as Volume);
-
 		goto(`/book/${row.id}`);
 	}
 
@@ -75,10 +75,10 @@
 			{sortDirection}
 			{searchQuery}
 			{totalRows}
-			onPageChange={handlePageChange}
-			onSortChange={handleSortChange}
-			onSearchChange={handleSearchChange}
-			onRowClick={handleRowClick}
+			pageChange={handlePageChange}
+			sortChange={handleSortChange}
+			searchChange={handleSearchChange}
+			rowClick={handleRowClick}
 		/>
 	{:else}
 		<p>No books found.</p>
