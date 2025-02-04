@@ -156,24 +156,3 @@ npm run build
 The build process takes only a few seconds and generates optimized assets.
 
 ---
-
-## Decisions and Trade-offs
-
-- **Mock Data:** No API calls were implemented to keep the project scope manageable.
-- **Functionality:** UI elements for search, filtering, and sorting are non-functional as the focus is on layout and structure.
-- **Framework Choice:** SvelteKit was chosen for its simplicity and fast development experience.
-
----
-
-## Submission
-
-Submit the project as either:
-- A GitHub repository link, or
-- A ZIP file containing the project files.
-
----
-
-## Notes
-- The project focuses on frontend best practices, including state management, component reusability, and responsive design.
-- The DataTable component is documented using JSDoc annotations for maintainability.
-
