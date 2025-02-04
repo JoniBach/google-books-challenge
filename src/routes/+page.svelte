@@ -1,34 +1,59 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import type { BooksResponse, Volume } from '$lib';
+
+	import Table from '$lib/components/Table.svelte';
 
 	const { data } = $props<{ books: BooksResponse }>();
 
-	let books: Volume[] = $state([]);
+	const columns = [
+		{ id: 'volumeInfo.title', label: 'Title' },
+		{ id: 'volumeInfo.authors', label: 'Authors' },
+		{ id: 'volumeInfo.publishedDate', label: 'Published Date' }
+	];
+
+	let books = $state([]);
+	let sortBy = $state('volumeInfo.publishedDate');
+	let sortDirection: 'asc' | 'desc' = $state('desc');
+	let searchQuery = $state('cats');
+
 	async function handleFetchData() {
-		books = data?.books?.items;
+		books = data?.books?.items ?? [];
 	}
-	$effect(() => {
+
+	function handleSortChange(column: string, direction: 'asc' | 'desc') {
+		sortBy = column;
+		sortDirection = direction;
 		handleFetchData();
-	});
+	}
+
+	function handleRowClick(row: any) {
+		console.log('Row clicked:', row as Volume);
+		goto(`/book/${row.id}`);
+	}
+
+	function handleSearchChange(query: string) {
+		searchQuery = query;
+		handleFetchData();
+	}
 
 	$effect(() => {
-		console.log(books);
+		handleFetchData();
 	});
 </script>
 
 {#if data?.books}
 	{#if data.books.totalItems > 0}
-		{#each books as book}
-			{#if book?.volumeInfo}
-				<div>
-					<h2>{book.volumeInfo.title}</h2>
-					<p>{book.volumeInfo.authors}</p>
-					<p>{book.volumeInfo.publishedDate}</p>
-					<p>{book.volumeInfo.description}</p>
-					<a href="book/{book.id}">View</a>
-				</div>
-			{/if}
-		{/each}
+		<Table
+			{columns}
+			data={books}
+			{sortBy}
+			{sortDirection}
+			{searchQuery}
+			onSortChange={handleSortChange}
+			onRowClick={handleRowClick}
+			onSearchChange={handleSearchChange}
+		/>
 	{:else}
 		<p>No books found.</p>
 	{/if}
